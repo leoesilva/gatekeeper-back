@@ -2,8 +2,8 @@
 
 ## 1. Tech Stack
 - Language: Kotlin (version 2.0+)
-- Framework: Spring Boot 3.3.0
-- Persistence: Spring Data JPA, Hibernate, PostgreSQL 16
+- Framework: Spring Boot 4.0.6
+- Persistence: Spring Data JPA, Hibernate, PostgreSQL 18
 - Integration: Eclipse Paho MQTT (Mosquitto)
 - Security: Spring Security with JWT (com.auth0:java-jwt)
 
