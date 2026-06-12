@@ -22,19 +22,27 @@ class SecurityConfig {
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests {
-                // 1. Rotas de Autenticação (Abertas para todos)
+                // 1. Rotas de documentação do Swagger e AsyncAPI
+                it.requestMatchers(
+                    "/v3/api-docs/**",
+                    "/swagger-ui/**",
+                    "/swagger-ui.html",
+                    "/asyncapi-ui.html",
+                    "/asyncapi.yaml"
+                ).permitAll()
+                // 2. Rotas de Autenticação (Abertas para todos)
                 it.requestMatchers("/api/auth/**").permitAll()
 
-                // 2. Rotas do Admin (Somente usuários com Role ADMIN)
+                // 3. Rotas do Admin (Somente usuários com Role ADMIN)
                 it.requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                // 3. Rotas do Gestor (Somente usuários com Role MANAGER)
+                // 4. Rotas do Gestor (Somente usuários com Role MANAGER)
                 it.requestMatchers("/api/manager/**").hasRole("MANAGER")
 
-                // 4. Rotas do Portador (Somente usuários com Role CARDHOLDER)
+                // 5. Rotas do Portador (Somente usuários com Role CARDHOLDER)
                 it.requestMatchers("/api/cardholder/**").hasRole("CARDHOLDER")
 
-                // 5. Qualquer outra rota (ex: Swagger futuro) exige apenas estar logado
+                // 6. Qualquer outra rota (ex: Swagger futuro) exige apenas estar logado
                 it.anyRequest().authenticated()
             }
             .cors(Customizer.withDefaults())

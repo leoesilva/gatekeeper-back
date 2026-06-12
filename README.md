@@ -1,102 +1,85 @@
-# Gatekeeper-back
+# 🛡️ Gatekeeper IoT - Backend Service
 
-API backend do projeto Gatekeeper, construída com Kotlin + Spring Boot.
+![Kotlin](https://img.shields.io/badge/Kotlin-2.3.21-purple?style=flat-square&logo=kotlin)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.6-brightgreen?style=flat-square&logo=spring-boot)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18.4-blue?style=flat-square&logo=postgresql)
+![MQTT](https://img.shields.io/badge/MQTT-Mosquitto-orange?style=flat-square)
 
-## Estado atual
+> **Resumo Executivo**  
+> O Gatekeeper é um sistema inteligente de controle de acesso (IoT) projetado para gerenciar e auditar entradas em ambientes corporativos ou residenciais através de credenciais RFID. Este repositório contém o **Core Backend**, responsável por centralizar a lógica de negócios, segurança e comunicação de toda a plataforma.
 
-O repositório já está configurado com base de projeto Spring Boot, Gradle Kotlin DSL e infraestrutura auxiliar (PostgreSQL e MQTT via Docker Compose).
+## 🏗️ Arquitetura Híbrida
 
-## Stack
+O grande diferencial arquitetural do Gatekeeper reside em sua topologia bifurcada, desenhada para atender a dois domínios distintos de forma otimizada:
 
-- Kotlin 2.3.x
-- Spring Boot 4.0.x
-- Spring Data JPA
-- Spring Validation
-- Spring Web MVC
-- PostgreSQL
-- MQTT (Eclipse Paho client + Mosquitto)
-- Gradle Wrapper
+1.  **Interface Síncrona (RESTful API):** Através de rotas HTTP protegidas por JWT e baseadas em RBAC (Role-Based Access Control), o sistema serve dados em tempo real para o painel administrativo (Gestores e Admins) e para o aplicativo mobile (Portadores/Cardholders).
+2.  **Interface Assíncrona (Event-Driven Edge):** Utilizando mensageria MQTT, o servidor se comunica com os hardwares ESP32 (Access Points) nas portas. Essa abordagem garante resiliência de rede, baixíssima latência na abertura de portas e logs de acesso confiáveis mesmo em conexões instáveis.
 
-## Pré-requisitos
+---
 
-- Java 21
-- Docker e Docker Compose (opcional, para subir PostgreSQL/MQTT)
+## 💻 Stack Tecnológica
 
-## Como executar
+*   **Linguagem:** Kotlin 2.3+
+*   **Framework Principal:** Spring Boot 4.0+
+*   **Persistência:** Spring Data JPA / Hibernate
+*   **Banco de Dados:** PostgreSQL 18
+*   **Mensageria & IoT:** Eclipse Paho MQTT v3 Client + Eclipse Mosquitto Broker
+*   **Segurança:** Spring Security + JWT (`com.auth0:java-jwt`)
+*   **Automação & Build:** Gradle (Kotlin DSL)
 
-### 1) Subir dependências locais (PostgreSQL e MQTT)
+---
 
-Na raiz do projeto:
+## 📖 Documentação das Interfaces
+
+Mantemos a documentação das nossas interfaces sempre atualizadas como código (Doc-as-Code).
+
+### 🌐 API REST (Swagger UI)
+A documentação interativa dos endpoints HTTP, schemas e esquemas de autenticação é gerada automaticamente pelo Springdoc OpenAPI.
+*   **Acesso Local:** [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+### 📨 Mensageria MQTT (AsyncAPI)
+O fluxo de eventos assíncronos, formatos de payload (JSON) para telemetria (envio de logs) e comandos (abertura de portas) estão catalogados utilizando o padrão AsyncAPI.
+* **Acesso Local:** [http://localhost:8080/asyncapi-ui.html](http://localhost:8080/asyncapi-ui.html)
+
+---
+
+## 🧪 Testes e Qualidade de Código
+
+A qualidade é garantida através de uma suíte de testes robusta que cobre as regras de negócio críticas, especialmente os serviços de autenticação e fluxos assíncronos.
+
+*   **Framework de Testes:** JUnit 5
+*   **Mocking:** MockK (`io.mockk:mockk`)
+*   **Cobertura:** JaCoCo
+
+### Relatório de Cobertura
+Para gerar e visualizar o relatório de cobertura de código do JaCoCo:
+```bash
+# Executa os testes e gera o relatório HTML
+./gradlew test jacocoTestReport
+```
+*Após a execução, abra o arquivo `build/reports/jacoco/test/html/index.html` no seu navegador.*
+
+---
+
+## 🚀 Como Executar Localmente
+
+Siga os passos abaixo para iniciar o ambiente de desenvolvimento completo na sua máquina.
+
+### 1. Subir a Infraestrutura (Banco & Broker)
+O projeto utiliza o Docker Compose para facilitar a orquestração do banco de dados e do servidor MQTT.
 
 ```bash
-docker compose up -d database mqtt-broker
+docker-compose up -d database mqtt-broker
 ```
 
-Serviços expostos por padrão:
+### 2. Configurar Propriedades
+O Spring Boot já está configurado para apontar para o `localhost` nas portas padrão expostas pelo Docker (`5432` para PostgreSQL e `1883` para MQTT). 
 
-- PostgreSQL: `localhost:5432`
-- MQTT: `localhost:1883`
-- MQTT WebSocket: `localhost:9001`
-
-Credenciais padrão do PostgreSQL (definidas no `docker-compose.yml`):
-
-- Banco: `gatekeeper_db`
-- Usuário: `admin`
-- Senha: `adminpassword`
-
-### 2) Configurar variáveis de ambiente da aplicação
-
-Antes de iniciar o backend, exporte as variáveis:
-
-```bash
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/gatekeeper_db
-export SPRING_DATASOURCE_USERNAME=admin
-export SPRING_DATASOURCE_PASSWORD=adminpassword
-export MQTT_BROKER_URL=tcp://localhost:1883
-```
-
-### 3) Rodar a aplicação com Gradle
+### 3. Executar a Aplicação
+Compile e rode o servidor utilizando o wrapper do Gradle:
 
 ```bash
 ./gradlew bootRun
 ```
 
-A aplicação inicia na porta padrão do Spring Boot (`8080`), salvo configuração diferente.
-
-## Executar com Docker (backend)
-
-O repositório possui `Dockerfile` para gerar a imagem do backend.
-
-### Build da imagem
-
-```bash
-docker build -t gatekeeper-back .
-```
-
-### Execução do container
-
-```bash
-docker run --rm -p 8080:8080 \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/gatekeeper_db \
-  -e SPRING_DATASOURCE_USERNAME=admin \
-  -e SPRING_DATASOURCE_PASSWORD=adminpassword \
-  -e MQTT_BROKER_URL=tcp://host.docker.internal:1883 \
-  gatekeeper-back
-```
-
-## Testes
-
-Executar suíte de testes:
-
-```bash
-./gradlew test
-```
-
-## Estrutura do projeto
-
-- `src/main/kotlin/com/webcrafters/gatekeeperback`: código Kotlin da aplicação
-- `src/main/resources`: arquivos de configuração
-- `mosquitto/config/mosquitto.conf`: configuração do broker MQTT
-- `docker-compose.yml`: serviços auxiliares para desenvolvimento local
-- `Dockerfile`: imagem da aplicação
-
+A API estará disponível na porta `8080` e conectada automaticamente ao broker MQTT.
