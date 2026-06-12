@@ -4,6 +4,7 @@ plugins {
     id("org.springframework.boot") version "4.0.6"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "2.3.21"
+    jacoco
 }
 
 group = "com.webcrafters"
@@ -28,6 +29,7 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin") // Correção: Adiciona o módulo Kotlin do Jackson
     implementation("com.auth0:java-jwt:4.4.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.eclipse.paho:org.eclipse.paho.client.mqttv3:1.2.5")
     testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
@@ -36,6 +38,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation("io.mockk:mockk:1.14.11")
 }
 
 kotlin {
@@ -52,4 +55,13 @@ allOpen {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required.set(false)
+        csv.required.set(false)
+        html.required.set(true)
+    }
 }

@@ -35,7 +35,7 @@ class AccessEventSubscriber(
         }
     }
 
-    private fun handleAccessEvent(topic: String, payload: String) {
+    internal fun handleAccessEvent(topic: String, payload: String) {
         try {
             val mqttIdentifier = topic.substringAfter("gatekeeper/access/")
             val accessPoint = accessPointRepository.findByMqttIdentifier(mqttIdentifier)
