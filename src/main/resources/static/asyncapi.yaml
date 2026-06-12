@@ -1,0 +1,73 @@
+asyncapi: 2.6.0
+info:
+  title: Gatekeeper IoT - API de Mensageria (MQTT)
+  version: 1.0.0
+  description: Documentação da interface de comunicação assíncrona orientada a eventos.
+servers:
+  mosquitto:
+    url: localhost:1883
+    protocol: mqtt
+    description: Eclipse Mosquitto MQTT Broker local (TCP)
+
+channels:
+  gatekeeper/access/request:
+    description: Tópico onde o hardware publica as tentativas de leitura de Tag RFID. O Back-end assina (subscribe) este tópico.
+    subscribe:
+      summary: Receber Payload de Acesso
+      operationId: receiveAccessRequest
+      message:
+        $ref: '#/components/messages/AccessEventPayload'
+
+  gatekeeper/access/response/{mqttIdentifier}:
+    description: Tópico onde o Back-end publica o resultado da validação. O hardware correspondente assina este tópico.
+    parameters:
+      mqttIdentifier:
+        schema:
+          type: string
+        description: Identificador único do hardware (ex. GATE_01) para direcionar a resposta.
+    publish:
+      summary: Enviar Autorização/Bloqueio
+      operationId: sendValidationResponse
+      message:
+        $ref: '#/components/messages/AccessValidationResult'
+
+components:
+  messages:
+    AccessEventPayload:
+      name: AccessEventPayload
+      title: Payload de Evento de Acesso
+      payload:
+        type: object
+        required:
+          - tagRead
+          - mqttIdentifier
+          - timestamp
+        properties:
+          tagRead:
+            type: string
+            description: Código hexadecimal exclusivo da Tag RFID capturada.
+            example: 'A1B2C3D4'
+          mqttIdentifier:
+            type: string
+            description: Identificador exclusivo do ponto de acesso físico.
+            example: 'GATE_01'
+          timestamp:
+            type: string
+            format: date-time
+            description: Data e hora exata da tentativa de leitura na borda.
+            example: '2026-06-11T22:12:37'
+
+    AccessValidationResult:
+      name: AccessValidationResult
+      title: Resultado da Validação
+      payload:
+        type: object
+        properties:
+          isGranted:
+            type: boolean
+            description: Define se o acesso foi liberado (true) ou bloqueado (false).
+            example: true
+          denialReason:
+            type: string
+            description: Motivo do bloqueio caso isGranted seja false.
+            example: 'TAG_UNREGISTERED'

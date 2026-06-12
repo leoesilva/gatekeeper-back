@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Gatekeeper IoT - Documentação MQTT</title>
+    <link rel="stylesheet" href="https://unpkg.com/@asyncapi/react-component@1.2.0/styles/default.min.css">
+    <style>
+        body { margin: 0; padding: 0; background-color: #f4f7f6; font-family: sans-serif; }
+    </style>
+</head>
+<body>
+
+<div id="asyncapi"></div>
+
+<script src="https://unpkg.com/@asyncapi/react-component@1.2.0/browser/standalone/index.js"></script>
+<script>
+    // Inicializa o componente apontando explicitamente para a URL do seu YAML
+    AsyncApiStandalone.render({
+        schema: {
+            url: '/asyncapi.yaml'
+        },
+        config: {
+            show: {
+                sidebar: true,
+                errors: true
+            }
+        }
+    }, document.getElementById('asyncapi'));
+</script>
+
+</body>
+</html>
