@@ -1,101 +1,109 @@
-# 🛡️ Gatekeeper: Sistema Híbrido de Controle de Acesso IoT
+# Gatekeeper (Módulo Backend)
 
-![Kotlin](https://img.shields.io/badge/Kotlin-2.3.21-blue.svg?logo=kotlin)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-brightgreen.svg?logo=spring)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18+-blue.svg?logo=postgresql)
-![MQTT](https://img.shields.io/badge/MQTT-Mosquitto-orange.svg?logo=eclipse-mosquitto)
-![Security](https://img.shields.io/badge/Security-JWT%20%7C%20OTP-blue.svg?logo=jsonwebtokens)
-![Tests](https://img.shields.io/badge/Tests-JUnit%205%20%7C%20MockK-red.svg?logo=junit5)
-
-**Gatekeeper** é uma solução de nível empresarial (Enterprise-grade) projetada para orquestrar o controle de acesso físico através de dispositivos de borda (IoT). Nascido com resiliência em mente, ele suporta operação mesmo em cenários de degradação de conectividade.
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![MQTT](https://img.shields.io/badge/MQTT-660066?style=for-the-badge&logo=mqtt&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 
 ---
 
-## 🏗️ 1. Visão Geral e Arquitetura Híbrida
+## 1. Nome do Projeto: Gatekeeper (Módulo Backend)
+Este documento detalha a implementação do componente de backend para o projeto Gatekeeper, responsável pela lógica de negócio, segurança e comunicação com dispositivos IoT.
 
-O projeto adota uma arquitetura de sistema distribuído com **topologia bifurcada**, oferecendo duas interfaces de comunicação altamente especializadas para diferentes atores do ecossistema:
+## 2. Integrantes:
+- Caio Cesar Silva Pena
+- Leonardo Euripedes da Silva
 
-*   🌐 **Interface HTTP/REST (Síncrona):**
-    Destinada aos painéis de gestão, administradores de condomínios e usuários finais. Provê endpoints protegidos por *Role-Based Access Control (RBAC)* e **Spring Security com JWT**. Todo o tráfego gerencial, relatórios, gestão de perfis e fluxos de autenticação (incluindo redefinição de senha com OTP) ocorrem através dessa interface clássica e robusta.
-*   📡 **Interface MQTT (Assíncrona Orientada a Eventos):**
-    Uma via exclusiva para a comunicação de telemetria e comandos com os hardwares de borda (pontos de acesso, leitores RFID baseados em ESP32). Utiliza o protocolo leve **MQTT (via Eclipse Mosquitto)** para garantir *low-latency* nas validações de tags RFID, reduzir o *overhead* de cabeçalhos HTTP e operar por *publish/subscribe* em tópicos altamente isolados de segurança.
+## 3. Tema Escolhido: Sistema Híbrido de Controle de Acesso IoT
+O projeto implementa um sistema de controle de acesso físico que combina tecnologias de IoT, Edge Computing e uma arquitetura de software híbrida para oferecer uma solução robusta, resiliente e segura.
 
----
+## 4. Descrição do Problema Resolvido:
+O Gatekeeper foi projetado para modernizar e resolver as fragilidades dos sistemas de controle de acesso convencionais. A solução aborda os seguintes pontos-chave:
 
-## ✨ 2. Funcionalidades Principais
+- **Orquestração de Hardware na Borda (Edge Computing):** A lógica de validação de credenciais é distribuída para os dispositivos de hardware (ESP32). Isso garante que a operação de abertura de portas seja instantânea, sem depender de uma consulta em tempo real ao servidor central.
+- **Funcionamento Offline:** Cada dispositivo de acesso na borda mantém um cache local de credenciais autorizadas. Caso o servidor principal ou a conexão de rede fiquem indisponíveis, os dispositivos continuam operando de forma autônoma, garantindo o acesso para usuários já validados sem interrupções.
+- **Arquitetura Híbrida e Assíncrona:** O sistema utiliza duas formas de comunicação para máxima eficiência:
+    - **MQTT (Message Queuing Telemetry Transport):** Para comunicação assíncrona e de baixo overhead entre o backend e os dispositivos de hardware. Eventos como atualização de cache, logs de acesso e comandos de manutenção são trafegados via broker MQTT (Mosquitto).
+    - **API REST:** Para a interface de gerenciamento (painel web/mobile). Fornece endpoints seguros para administradores e gerentes de condomínio realizarem o cadastro de usuários, credenciais, pontos de acesso e visualizarem relatórios.
 
-*   **Gestão de Acesso por Perfil (RBAC):** Divisão clara de responsabilidades entre Administradores, Gestores e Portadores (Cardholders).
-*   **Autenticação Segura:** Login com JWT e fluxo completo de redefinição de senha utilizando OTP (One-Time Password).
-*   **Gestão de Portadores (Cardholders):** CRUD completo para usuários finais, com ativação/inativação e associação de credenciais.
-*   **Inteligência de Borda (Edge Computing):** Sincronização de cache com dispositivos IoT para garantir operação offline.
-*   **Auditoria Completa:** Logs detalhados de todos os eventos de acesso.
+## 5. Lista de Entidades Implementadas:
+O domínio da aplicação foi modelado com base nas seguintes entidades principais:
 
----
+1.  **`AppUser`**: Representa um usuário no sistema, seja ele um Administrador, Gerente ou Portador de credencial. Contém informações como nome, e-mail, senha e papel (role).
+2.  **`AccessPoint`**: Modela o dispositivo de hardware (ESP32) instalado em um local físico (ex: "Portaria Principal"). Contém um identificador único para comunicação MQTT e sua descrição.
+3.  **`RfidCredential`**: Representa um cartão ou tag RFID físico. Está associado a um `AppUser` e possui um código hexadecimal único que é lido pelo `AccessPoint`.
+4.  **`AccessLog`**: Um registro imutável de todas as tentativas de acesso. Grava qual tag foi usada, em qual ponto de acesso, o horário e se o acesso foi concedido ou negado.
+5.  **`OneTimePassword`**: Entidade para armazenar códigos de uso único (OTP) gerados para o processo de redefinição de senha, garantindo a segurança da troca de credenciais.
 
-## 🧠 3. Inteligência de Borda (Edge Computing) e Resiliência
+## 6. Instruções para Execução:
+Para executar o ambiente completo (Backend, Banco de Dados e Broker MQTT), siga os passos abaixo.
 
-Uma infraestrutura crítica de segurança física não pode depender de uma nuvem com 100% de disponibilidade. O Gatekeeper delega inteligência aos dispositivos através do fluxo de **Resiliência e Modo Offline**.
+> **Nota:** A documentação completa e interativa dos endpoints da API está disponível via Swagger UI. Após iniciar a aplicação, acesse: [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html)
 
-**Mecanismo de Sincronização e Fallback:**
-*   **Cache Proativo no Hardware:**
-    O Back-end, por meio do componente `CacheSyncService`, publica via MQTT uma lista atualizada de *Hashes de Credenciais Válidas* sempre que há uma alteração nos painéis gerenciais (ex: inativação de um usuário).
-*   **Modo Offline Seguro:**
-    Se o Ponto de Acesso (hardware) perder conexão com a rede Wi-Fi ou com o Broker MQTT, ele continua liberando catracas/portas validando as leituras de RFID localmente contra as chaves previamente salvas em sua memória Flash não volátil.
-*   **Reconciliação Assíncrona:**
-    Durante o *Modo Offline*, todo e qualquer log de acesso (concedido ou negado) é enfileirado localmente na borda. Quando a conexão é restabelecida, o dispositivo descarrega a fila reprimida (*burst*) através do MQTT. Os *Subscribers* no back-end consomem esses eventos retroativos e reconciliam a base de auditoria (`AccessLog`).
+**Passo 1: Iniciar a Infraestrutura com Docker**
 
----
+O `docker-compose.yml` na raiz do projeto orquestra os contêineres para o banco de dados PostgreSQL e o broker Mosquitto. Certifique-se de ter o Docker e o Docker Compose instalados e execute o comando:
 
-## 🛠️ 4. Stack Tecnológica
-
-Todo o core do produto foi modernizado para as mais recentes plataformas do mercado de desenvolvimento corporativo:
-
-| Tecnologia | Descrição / Uso |
-| :--- | :--- |
-| **Kotlin (2.3.21)** | Linguagem principal adotando concisão, *null-safety* e classes *data/value*. |
-| **Spring Boot (4.0.6)** | Framework base, provendo Injeção de Dependência, Data JPA/Hibernate e Web MVC. |
-| **PostgreSQL (18+)** | RDBMS para persistência de dados críticos, domínios e logs com alta confiabilidade. |
-| **Eclipse Mosquitto** | Message Broker *open-source* padrão da indústria para IoT (MQTT). |
-| **Spring Security & JWT** | Autenticação *stateless* e controle refinado de autorização baseada em Roles (ADMIN, MANAGER, CARDHOLDER). |
-| **ArduinoJson** | No firmware da borda (C++), os pacotes trafegados via MQTT utilizam esse parser robusto. |
-
----
-
-## 📖 5. Documentação Doc-as-Code
-
-O mapeamento da plataforma, desde a sua infraestrutura até o contrato com os clientes, vive e evolui no mesmo ciclo de vida que a base de código (*Doc-as-Code*).
-
-*   **API REST (Swagger / OpenAPI 3):**
-    Contratos estritos, *schemas* de requisição/resposta, DTOs e requisitos de segurança. Acessível em tempo de desenvolvimento através de:
-    ➡️ `http://localhost:8080/swagger-ui.html`
-*   **Mensageria IoT (AsyncAPI):**
-    Documentação mapeando os canais, tópicos de subscrição (`gatekeeper/access/events`), padrões de payload de telemetria (C2D) e Comandos de Borda (D2C). Acessível em:
-    ➡️ `http://localhost:8080/asyncapi-ui.html`
-
----
-
-## 🧪 6. Engenharia de Qualidade
-
-Código de segurança exige garantias de execução estritas. A cultura de qualidade do projeto é orientada à Testes Automatizados da pirâmide base:
-
-*   **Testes Unitários:** Operados via **JUnit 5**, verificando intensamente a camada de Domínio, `Services` e fluxos de `Security`.
-*   **MockK Nativo:** Empregamos `MockK` pela aderência orgânica ao ecossistema Kotlin. Utilizamos extensivamente a injeção nativa de dependências via **Construtor Primário** para provisionar Mocks, banindo injeções de campo por *Reflection* (`@Autowired`), o que previne erros mascarados e garante testes mais velozes.
-*   **Análise de Cobertura:** Com **JaCoCo**, emitimos relatórios em pipeline que validam a cobertura mínima, prevenindo a introdução de rotinas com pontas soltas.
-
----
-
-## 🚀 7. Guia de Execução
-
-Seja para desenvolvimento iterativo ou deploy local, a inicialização da plataforma é direta e exige zero configuração manual no sistema operacional host.
-
-**Passo 1: Subir Infraestrutura de Apoio (PostgreSQL, Broker MQTT)**
-Na raiz do projeto, acione o manifesto Docker:
 ```bash
+# Inicia os contêineres em modo detached (background)
 docker-compose up -d
 ```
 
-**Passo 2: Iniciar o Application Server**
-Utilizando o Gradle Wrapper para baixar dependências e compilar a aplicação na JVM 21+:
+**Passo 2: Iniciar a Aplicação Spring Boot**
+
+Com a infraestrutura rodando, inicie a API do backend utilizando o Gradle Wrapper fornecido.
+
 ```bash
+# No Linux ou macOS
 ./gradlew bootRun
+
+# No Windows
+gradlew.bat bootRun
 ```
+
+A API estará disponível na porta `8080`.
+
+## 7. Variáveis de Ambiente Necessárias:
+Para que a aplicação funcione corretamente, é preciso criar um arquivo `.env` na raiz do projeto (ou `.env.development` para execução local) com base no `.env.example`. As seguintes variáveis são essenciais:
+
+```ini
+# === Configuração do Banco de Dados PostgreSQL ===
+DB_NAME=gatekeeper_db
+DB_USERNAME=admin
+DB_PASSWORD=adminpassword
+DB_URL="jdbc:postgresql://localhost:5432/gatekeeper_db" # URL para execução local
+
+# === Configuração do Broker MQTT Mosquitto ===
+MQTT_BROKER_URL=tcp://localhost:1883 # URL para execução local
+MQTT_CLIENT_ID=gatekeeper-backend-spring
+
+# === Configuração de Segurança JWT ===
+JWT_SECRET=GatekeeperBackJwtSecretKey_ChangeInProduction_32CharsMin
+JWT_EXPIRATION_MS=86400000 # 24 horas
+```
+
+## 8. Exemplos de Usuários/Senhas para Teste:
+Para facilitar a avaliação do projeto, o sistema é inicializado com usuários de teste para cada perfil de acesso. Utilize as credenciais abaixo para autenticar-se no Swagger e testar os endpoints protegidos correspondentes a cada papel.
+
+- **Perfil Administrador:**
+    - **Usuário:** `admin@gatekeeper.com`
+    - **Senha:** `admin123`
+    - **Nota:** Com este usuário, é possível gerenciar outros administradores e criar usuários do tipo `MANAGER`.
+
+- **Perfil Gerente:**
+    - **Usuário:** `manager@gatekeeper.com`
+    - **Senha:** `manager123`
+    - **Nota:** Com este usuário, é possível gerenciar usuários do tipo `CARDHOLDER`, credenciais RFID e visualizar logs de acesso.
+
+- **Perfil Portador (Usuário Final):**
+    - **Usuário:** `user@gatekeeper.com`
+    - **Senha:** `user123`
+    - **Nota:** Este usuário pode visualizar seus próprios dados e logs de acesso.
+
+## 9. Divisão de Responsabilidades por Integrante:
+A colaboração no projeto foi estruturada da seguinte forma:
+
+- **Leonardo Euripedes da Silva:** Responsável integral pela implementação técnica e desenvolvimento do software backend. Isso incluiu a codificação em Kotlin, configuração do Spring Boot, implementação da camada de segurança com Spring Security e JWT, integração com banco de dados PostgreSQL via JPA/Hibernate, desenvolvimento de toda a lógica de comunicação com o broker Mosquitto (MQTT), criação dos CRUDs, serviços, DTOs e a arquitetura de sincronização de cache com os dispositivos de borda.
+
+- **Caio Cesar Silva Pena:** Participou ativamente das etapas de concepção e planejamento da arquitetura do sistema. Colaborou na definição do escopo, no desenho inicial das entidades, na discussão sobre a escolha das tecnologias (arquitetura híbrida REST/MQTT) e na validação dos requisitos funcionais e não-funcionais do projeto.
